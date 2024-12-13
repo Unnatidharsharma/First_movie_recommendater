@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommender</title>
+    <style>
+        /* Same styles as provided */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: url('https://www.universitymagazine.ca/wp-content/uploads/2021/08/How-to-Get-Netflix-For-Free.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 60px;
+            animation: fadeIn 1.5s ease;
+            text-shadow: 2px 2px 6px #000;
+        }
+
+        form {
+            max-width: 100%;
+            margin: 30px auto;
+            text-align: center;
+        }
+
+        input[type="text"] {
+            width: 40%;
+            padding: 15px;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #fff;
+            color: #4CAF50;
+            padding: 15px 30px;
+            border: 1px solid #4CAF50;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #4CAF50;
+            color: #fff;
+        }
+
+        #results {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin: 30px auto;
+            max-width: 90%;
+        }
+
+        .movie {
+            text-align: center;
+            color: #fff;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        .movie img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        /* Modal box styles */
+        #modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        #modal h2 {
+            margin-top: 0;
+        }
+
+        #modal .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff5c5c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #modal .close:hover {
+            background-color: #ff0000;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Movie Recommender</h1>
+    <form id="searchForm">
+        <input type="text" id="searchQuery" name="searchQuery" placeholder="Enter movie name...">
+        <button type="button" onclick="searchMovies()">Search</button>
+    </form>
+    <div id="results"></div>
+
+    <!-- Modal -->
+    <div id="modal">
+        <button class="close" onclick="closeModal()">X</button>
+        <h2 id="modalTitle">Movie Title</h2>
+        <img id="modalPoster" src="" alt="Movie Poster" style="width:100%; max-width: 400px; margin-bottom: 10px;">
+        <p><strong>Overview:</strong> <span id="modalOverview"></span></p>
+        <p><strong>Release Date:</strong> <span id="modalReleaseDate"></span></p>
+        <p><strong>Rating:</strong> <span id="modalRating"></span></p>
+    </div>
+
+    <script>
+        function searchMovies() {
+            const query = document.getElementById('searchQuery').value.trim();
+            const resultsDiv = document.getElementById('results');
+
+            // Clear previous results
+            resultsDiv.innerHTML = '';
+
+            if (!query) {
+                alert('Please enter a movie name!');
+                return;
+            }
+
+            // Fetch movie data
+            fetch('/search_movie', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ query: query })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.movies && data.movies.length > 0) {
+                    data.movies.forEach(movie => {
+                        const movieDiv = document.createElement('div');
+                        movieDiv.classList.add('movie');
+                        movieDiv.innerHTML = `
+                            <img src="${movie.poster_url || 'https://via.placeholder.com/500x750?text=No+Image+Available'}" alt="${movie.title || 'Movie Poster'}">
+                            <h3>${movie.title || 'Unknown Title'}</h3>
+                        `;
+
+                        // Add event listener to fetch movie details when clicked
+                        movieDiv.addEventListener('click', function() {
+                            fetchMovieDetails(movie.id);
+                        });
+
+                        resultsDiv.appendChild(movieDiv);
+                    });
+                } else {
+                    resultsDiv.innerHTML = `<p>No movies found. Try a different search term.</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = `<p>An error occurred. Please try again later.</p>`;
+            });
+        }
+
+        function fetchMovieDetails(movieId) {
+            fetch('/get_movie_details', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ movie_ids: [movieId] })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.movies && data.movies.length > 0) {
+                    const movie = data.movies[0];
+                    // Populate modal with movie details
+                    document.getElementById('modalTitle').innerText = movie.title || 'Unknown Title';
+                    document.getElementById('modalPoster').src = movie.poster_url || 'https://via.placeholder.com/500x750?text=No+Image+Available';
+                    document.getElementById('modalOverview').innerText = movie.overview || 'No overview available.';
+                    document.getElementById('modalReleaseDate').innerText = movie.release_date || 'N/A';
+                    document.getElementById('modalRating').innerText = movie.vote_average || 'N/A';
+
+                    // Show modal
+                    document.getElementById('modal').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to fetch movie details.');
+            });
+        }
+
+        function closeModal() {
+            // Hide modal
+            document.getElementById('modal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
+

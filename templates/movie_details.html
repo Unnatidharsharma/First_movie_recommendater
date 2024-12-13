@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Cast</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: url('https://www.universitymagazine.ca/wp-content/uploads/2021/08/How-to-Get-Netflix-For-Free.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .cast-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 30px auto;
+            max-width: 90%;
+        }
+
+        .cast-member {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        .cast-member img {
+            width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .cast-member h3 {
+            font-size: 16px;
+        }
+
+        .back-button {
+            background-color: #fff;
+            color: #4CAF50;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            display: block;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Movie Cast</h1>
+    <div class="cast-list">
+        {% for cast in cast_details %}
+        <div class="cast-member">
+            <img src="{{ cast.profile_path }}" alt="{{ cast.name }}">
+            <h3>{{ cast.name }}</h3>
+            <p>as {{ cast.character }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    <a href="/" class="back-button">Back to Home</a>
+</body>
+</html>
+
+
